@@ -73,7 +73,8 @@ Tracks the International Space Station and shows its ground track over one orbit
 
 Tracks multiple satellites with different orbit types (LEO, MEO, HEO) over 24 hours. Really interesting to see how a Molniya orbit's altitude swings compared to circular orbits like the ISS or GPS.
 
-![Constellation Altitude Evolution](plots/constellation_altitude.png)
+<img width="1400" height="800" alt="constellation_altitude" src="https://github.com/user-attachments/assets/d2ef93a4-1a84-442d-ba6a-edb251a663ec" />
+
 *24-hour altitude evolution showing different orbit types - notice how the Molniya (red) swings from ~1,600 km up to ~38,000 km*
 
 ### Plotting (`scripts/plot_examples.py`)
@@ -204,7 +205,4 @@ Based on the classic SGP4 papers and Vallado's revisit:
 
 MIT License — See [LICENSE](LICENSE) for details.
 
-## Author
 
-Hamoud Alshammari  
-[GitHub](https://github.com/OrbitAR7) | [LinkedIn](https://www.linkedin.com/in/hamoud-alshammari-7415b617a/)
