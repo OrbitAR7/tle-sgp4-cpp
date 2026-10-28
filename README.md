@@ -1,6 +1,8 @@
 # TLE SGP4 C++
 
-A simple header-only C++ library for satellite orbit propagation using SGP4. Perfect for tracking satellites, predicting passes, or analyzing constellations. No external dependencies needed - just drop the header in and you're good to go.
+A header-only C++17 implementation of TLE parsing and SGP4 propagation, written to learn the algorithm from Spacetrack Report #3 and Vallado et al. (2006).
+
+> **Validation status: does not yet match the reference implementation.** Compared with the reference SGP4 (Vallado's code, via the Python `sgp4` package, WGS-72) for the ISS TLE in the Quick Start, position differences are about 18 km at epoch, 80 km after 6 hours and 470 km after 1 day. A correct SGP4 agrees with the reference to well under a metre, so there is a bug in initialization or the secular/periodic terms. Use the reference implementation for any real analysis until this is fixed.
 
 ## Features
 
@@ -52,9 +54,6 @@ make
 # Run examples
 ./iss_tracking
 ./constellation_demo
-
-# Run tests
-./test_sgp4
 ```
 
 ### Direct Compilation
@@ -180,12 +179,10 @@ If you need production-grade deep-space propagation, check out Vallado's referen
 
 ## Accuracy
 
-SGP4 is pretty good but not perfect:
-- **Position:** 1-3 km error at epoch
-- **Velocity:** 1-3 m/s error at epoch  
-- Degrades about 1-3 km per day from the epoch
+Two separate questions:
 
-For best results, grab fresh TLEs (< 2 days old) from Space-Track or Celestrak.
+1. **Implementation correctness:** does this code reproduce reference SGP4 output? *Not yet* (see the validation note at the top). The fix is to compare intermediate quantities (recovered mean motion, secular rates, short-period terms) against Vallado's test cases and the `sgp4` Python package.
+2. **Model accuracy:** how well does SGP4 itself predict the real orbit? For LEO, errors are typically on the order of a kilometre near the TLE epoch and grow by kilometres per day, so use fresh TLEs.
 
 ## Where to Get TLEs
 
