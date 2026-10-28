@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(tle_sgp4_cpp 
-    VERSION 1.0.0
-    DESCRIPTION "C++ SGP4/SDP4 Orbit Propagator for TLE Data"
+    VERSION 1.1.0
+    DESCRIPTION "Header-only C++ SGP4 (near-Earth) propagator for TLE data"
     LANGUAGES CXX)
 
 # C++17 standard
@@ -39,6 +39,7 @@ if(BUILD_TESTS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sgp4.cpp")
     enable_testing()
     add_executable(test_sgp4 tests/test_sgp4.cpp)
     target_link_libraries(test_sgp4 PRIVATE sgp4_propagator)
+    target_include_directories(test_sgp4 PRIVATE tests)
     add_test(NAME SGP4Tests COMMAND test_sgp4)
 endif()
 

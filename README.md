@@ -1,17 +1,16 @@
 # TLE SGP4 C++
 
-A header-only C++17 implementation of TLE parsing and SGP4 propagation, written to learn the algorithm from Spacetrack Report #3 and Vallado et al. (2006).
+A header-only C++17 TLE parser and near-Earth SGP4 propagator, written from Spacetrack Report #3 and Vallado et al. (2006).
 
-> **Validation status: does not yet match the reference implementation.** Compared with the reference SGP4 (Vallado's code, via the Python `sgp4` package, WGS-72) for the ISS TLE in the Quick Start, position differences are about 18 km at epoch, 80 km after 6 hours and 470 km after 1 day. A correct SGP4 agrees with the reference to well under a metre, so there is a bug in initialization or the secular/periodic terms. Use the reference implementation for any real analysis until this is fixed.
+It reproduces the reference SGP4 (the `sgp4` Python package, which wraps Vallado's code; WGS-72, improved mode) to under a micrometre in position over three days for the test cases in `tests/`, including the classic Spacetrack Report #3 TLE (88888, perigee 198 km, so it runs the simplified low-perigee drag branch) and an e = 0.18 orbit. Deep-space objects (period ≥ 225 min, which need SDP4) are detected and rejected instead of being propagated with the wrong model.
 
 ## Features
 
-- **TLE Parsing** - Handles standard two-line element sets
-- **SGP4 Propagation** - Near-Earth orbit propagation (includes J2-J4 perturbations)
-- **Position & Velocity** - Returns state vectors in TEME frame
-- **Orbital Parameters** - Calculates period, apogee/perigee, semi-major axis
-- **Time Conversions** - Julian Date support built-in
-- **Header-only** - Just one file, no dependencies or linking needed
+- TLE parsing (including the implied-decimal exponent fields) and epoch to Julian date
+- Near-Earth SGP4: secular J2/J4 rates, atmospheric drag (BSTAR, C1-C5, D2-D4), long- and short-period periodics
+- State vectors in TEME [km, km/s]; GMST for rotating to Earth-fixed
+- Period, semi-major axis, apogee/perigee altitudes
+- Single header, no dependencies
 
 ## Quick Start
 
@@ -51,9 +50,10 @@ mkdir build && cd build
 cmake ..
 make
 
-# Run examples
+# Run examples and the reference test
 ./iss_tracking
 ./constellation_demo
+ctest --output-on-failure
 ```
 
 ### Direct Compilation
@@ -70,11 +70,7 @@ Tracks the International Space Station and shows its ground track over one orbit
 
 ### Constellation Demo (`examples/constellation_demo.cpp`)
 
-Tracks multiple satellites with different orbit types (LEO, MEO, HEO) over 24 hours. Really interesting to see how a Molniya orbit's altitude swings compared to circular orbits like the ISS or GPS.
-
-<img width="1400" height="800" alt="constellation_altitude" src="https://github.com/user-attachments/assets/d2ef93a4-1a84-442d-ba6a-edb251a663ec" />
-
-*24-hour altitude evolution showing different orbit types - notice how the Molniya (red) swings from ~1,600 km up to ~38,000 km*
+Loads several TLEs (ISS, Hubble, Starlink, plus a GPS and a Molniya satellite that are skipped as deep-space), compares their orbits, tracks altitude over 24 hours, and finds the closest approach to the ISS.
 
 ### Plotting (`scripts/plot_examples.py`)
 
@@ -169,37 +165,40 @@ ISS (ZARYA)
 
 ## Coordinate Frame
 
-Outputs are in the **TEME (True Equator Mean Equinox)** frame - basically an Earth-centered inertial frame. To get latitude/longitude for ground tracks, you'll need to rotate by Greenwich Sidereal Time (GMST). Check `examples/iss_tracking.cpp` for a working example.
+Outputs are in the **TEME (True Equator Mean Equinox)** frame, a quasi-inertial Earth-centered frame. To get latitude/longitude for ground tracks, you'll need to rotate by Greenwich Sidereal Time (GMST). Check `examples/iss_tracking.cpp` for a working example.
+
+## Validation
+
+`tests/test_sgp4.cpp` compares position and velocity with the reference implementation at 0, 6, 24 and 72 hours for three TLEs, and also checks the epoch Julian date and the deep-space rejection:
+
+```
+max position difference vs reference: 6.6e-07 m
+max velocity difference vs reference: 6.5e-07 mm/s
+```
+
+`scripts/make_reference.py` regenerates the reference states (`pip install sgp4`).
+
+Agreement with the reference only shows that the code implements SGP4 correctly. SGP4 itself is a mean-element model fit to tracking data: for LEO it is typically good to around a kilometre near the TLE epoch, and the error grows by kilometres per day, so use recent TLEs.
 
 ## Limitations
 
-This is designed for **near-Earth satellites** (orbital period < 225 minutes). Deep-space objects like GEO or Molniya use a simplified propagation model here - it works but isn't as accurate as a full SDP4 implementation.
-
-If you need production-grade deep-space propagation, check out Vallado's reference code or the official Space-Track libraries.
-
-## Accuracy
-
-Two separate questions:
-
-1. **Implementation correctness:** does this code reproduce reference SGP4 output? *Not yet* (see the validation note at the top). The fix is to compare intermediate quantities (recovered mean motion, secular rates, short-period terms) against Vallado's test cases and the `sgp4` Python package.
-2. **Model accuracy:** how well does SGP4 itself predict the real orbit? For LEO, errors are typically on the order of a kilometre near the TLE epoch and grow by kilometres per day, so use fresh TLEs.
+- **Near-Earth only.** SDP4 (lunar/solar perturbations and the 12-h/24-h resonances for GPS, Molniya, GEO) is not implemented. `propagate()` throws `std::domain_error` for those objects.
+- Output is TEME. GMST is the IAU-82 formula with UT1 ≈ UTC. No polar motion or TEME→GCRF conversion is included.
+- Errors that the reference code flags (decay, eccentricity out of range) are raised as `std::domain_error`.
 
 ## Where to Get TLEs
 
-- [Space-Track.org](https://www.space-track.org) - Need to register but it's free
-- [Celestrak](https://celestrak.org) - No registration required  
-- [N2YO](https://www.n2yo.com) - Easy to browse and search
+- [Space-Track.org](https://www.space-track.org) (free account)
+- [CelesTrak](https://celestrak.org) (no registration)
 
 ## References
 
-Based on the classic SGP4 papers and Vallado's revisit:
-
-1. Hoots & Roehrich (1980) - *Spacetrack Report No. 3* (the original SGP4 spec)  
-2. Vallado et al. (2006) - *Revisiting Spacetrack Report #3* (modern updates)  
-3. [Celestrak SGP4 Resources](https://celestrak.org/software/tskelso-sw.php)
+1. F. R. Hoots and R. L. Roehrich, *Spacetrack Report No. 3: Models for Propagation of NORAD Element Sets*, 1980.
+2. D. A. Vallado, P. Crawford, R. Hujsak and T. S. Kelso, "Revisiting Spacetrack Report #3," AIAA 2006-6753.
+3. B. Rhodes, `sgp4` Python package (reference used for the tests).
 
 ## License
 
-MIT License — See [LICENSE](LICENSE) for details.
+MIT. See [LICENSE](LICENSE).
 
 

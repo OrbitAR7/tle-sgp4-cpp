@@ -96,7 +96,15 @@ def plot_iss(t: List[float], lat: List[float], lon: List[float], alt: List[float
     (outdir / "plots").mkdir(parents=True, exist_ok=True)
     # Ground track
     plt.figure(figsize=(6, 3))
-    plt.plot(lon, lat, marker="o")
+    # break the line where longitude wraps at +/-180 deg
+    lon_p, lat_p = [lon[0]], [lat[0]]
+    for i in range(1, len(lon)):
+        if abs(lon[i] - lon[i - 1]) > 180.0:
+            lon_p.append(float("nan"))
+            lat_p.append(float("nan"))
+        lon_p.append(lon[i])
+        lat_p.append(lat[i])
+    plt.plot(lon_p, lat_p, marker="o")
     plt.xlabel("Lon [deg]")
     plt.ylabel("Lat [deg]")
     plt.title("ISS Ground Track (one orbit)")

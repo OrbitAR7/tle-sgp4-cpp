@@ -66,6 +66,13 @@ int main() {
     for (const auto& tle_data : tle_database) {
         try {
             SGP4 sat(tle_data.line1, tle_data.line2, tle_data.name);
+            if (sat.isDeepSpace()) {
+                // period >= 225 min needs SDP4 (lunar/solar terms, resonance), not implemented here
+                std::cout << "  - " << tle_data.name << " skipped: deep-space orbit ("
+                          << std::fixed << std::setprecision(0) << sat.getPeriod()
+                          << " min period), SDP4 not implemented\n";
+                continue;
+            }
             satellites.push_back(sat);
             std::cout << "  ✓ " << tle_data.name << " (NORAD " << sat.tle.satellite_number << ")\n";
         } catch (const std::exception& e) {
