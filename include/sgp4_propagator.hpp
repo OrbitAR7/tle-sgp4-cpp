@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <stdexcept>
 #include <algorithm>
+#include <iostream>
 
 namespace sgp4 {
 

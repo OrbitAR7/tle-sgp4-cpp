@@ -35,7 +35,7 @@ endif()
 
 # Tests
 option(BUILD_TESTS "Build tests" ON)
-if(BUILD_TESTS)
+if(BUILD_TESTS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sgp4.cpp")
     enable_testing()
     add_executable(test_sgp4 tests/test_sgp4.cpp)
     target_link_libraries(test_sgp4 PRIVATE sgp4_propagator)
